@@ -24,7 +24,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-# ДОБАВЬ ЭТОТ БЛОК В САМЫЙ КОНЕЦ ФАЙЛА:
 flutter_icons:
   android: true
   ios: true

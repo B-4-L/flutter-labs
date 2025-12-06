@@ -15,6 +15,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
   Quote? _currentQuote;
   bool _isLoading = false;
   String _statusMessage = '';
+  String _errorMessage = '';
 
   @override
   void initState() {
@@ -26,6 +27,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
     setState(() {
       _isLoading = true;
       _statusMessage = 'Загружаем из интернета...';
+      _errorMessage = '';
     });
 
     try {
@@ -38,34 +40,36 @@ class _QuotesScreenState extends State<QuotesScreen> {
       final localQuotes = widget.quoteUseCases.getLocalQuotes();
       setState(() {
         _currentQuote = localQuotes.isNotEmpty ? localQuotes[0] : null;
-        _statusMessage = 'Используем локальную цитату (нет интернета)';
+        _statusMessage = 'Используем локальную цитату';
+        _errorMessage = 'Ошибка: ${e.toString().replaceAll('Exception: ', '')}';
       });
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
-  void _showLocalQuote() {
-    final localQuotes = widget.quoteUseCases.getLocalQuotes();
-    if (localQuotes.isEmpty) return;
-    
-    int currentIndex = 0;
-    if (_currentQuote != null) {
-      final index = localQuotes.indexWhere(
-        (quote) => quote.text == _currentQuote!.text
-      );
-      if (index != -1) {
-        currentIndex = index;
-      }
+void _showLocalQuote() {
+  final localQuotes = widget.quoteUseCases.getLocalQuotes();
+  if (localQuotes.isEmpty) return;
+  
+  int currentIndex = 0;
+  if (_currentQuote != null) {
+    final index = localQuotes.indexWhere(
+      (quote) => quote.text == _currentQuote!.text
+    );
+    if (index != -1) {
+      currentIndex = index;
     }
-    
-    final nextIndex = (currentIndex + 1) % localQuotes.length;
-    
-    setState(() {
-      _currentQuote = localQuotes[nextIndex];
-      _statusMessage = 'Локальная цитата';
-    });
   }
+  
+  final nextIndex = (currentIndex + 1) % localQuotes.length;
+  
+  setState(() {
+    _currentQuote = localQuotes[nextIndex];
+    _statusMessage = 'Локальная цитата'; 
+    _errorMessage = '';
+  });
+}
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +109,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
               size: 80,
               color: Colors.deepPurple.shade300,
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
             
             if (_isLoading)
               const Column(
@@ -125,6 +129,12 @@ class _QuotesScreenState extends State<QuotesScreen> {
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     children: [
+                      Icon(
+                        Icons.format_quote,
+                        color: Colors.deepPurple.shade200,
+                        size: 40,
+                      ),
+                      const SizedBox(height: 10),
                       Text(
                         '«${_currentQuote!.text}»',
                         style: TextStyle(
@@ -150,15 +160,31 @@ class _QuotesScreenState extends State<QuotesScreen> {
                 ),
               ),
             
-            if (_statusMessage.isNotEmpty)
+              if (_statusMessage.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 15),
+                  child: Text(
+                    _statusMessage,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: _statusMessage.contains('интернета') 
+                          ? Colors.green 
+                          : Colors.orange.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+            
+            if (_errorMessage.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 10),
                 child: Text(
-                  _statusMessage,
-                  style: TextStyle(
+                  _errorMessage,
+                  style: const TextStyle(
                     fontSize: 12,
-                    color: _statusMessage.contains('интернета') ? Colors.green : Colors.orange,
+                    color: Colors.red,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ),
             
@@ -170,18 +196,20 @@ class _QuotesScreenState extends State<QuotesScreen> {
                 ElevatedButton.icon(
                   onPressed: _isLoading ? null : _loadRandomQuote,
                   icon: const Icon(Icons.cloud_download),
-                  label: const Text('Из интернета'),
+                  label: const Text('Новая из интернета'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   ),
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
                   onPressed: _isLoading ? null : _showLocalQuote,
                   icon: const Icon(Icons.phone_android),
-                  label: const Text('Локальная'),
+                  label: const Text('Следующая локальная'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple.shade300,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   ),
                 ),
               ],
@@ -189,28 +217,26 @@ class _QuotesScreenState extends State<QuotesScreen> {
             
             const SizedBox(height: 20),
             
+            Text(
+              'Всего локальных цитат: ${widget.quoteUseCases.getLocalQuotes().length}',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+              ),
+            ),
+            
+            const SizedBox(height: 5),
+            
             const Text(
               'API: api.quotable.io/random',
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey,
               ),
-              textAlign: TextAlign.center,
-            ),
-            
-            const SizedBox(height: 5),
-            
-            const Text(
-              'HTTP API в Flutter',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
       ),
     );
   }
-} 
+}

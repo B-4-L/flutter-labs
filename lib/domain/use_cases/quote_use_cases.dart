@@ -1,5 +1,5 @@
 import '../../data/repositories/quote_repository.dart';
-import '../models/quote.dart';
+import '../../domain/models/quote.dart';
 
 class QuoteUseCases {
   final QuoteRepository _repository;
@@ -7,15 +7,10 @@ class QuoteUseCases {
   QuoteUseCases(this._repository);
 
   Future<Quote> getRandomQuote() async {
-    try {
-      return await _repository.getRandomQuote();
-    } catch (e) {
-      // Fallback на локальные цитаты
-      final localQuotes = _repository.getLocalQuotes();
-      final index = DateTime.now().millisecond % localQuotes.length;
-      return localQuotes[index];
-    }
+    return await _repository.getRandomQuote();
   }
 
-  List<Quote> getLocalQuotes() => _repository.getLocalQuotes();
+  List<Quote> getLocalQuotes() {
+    return _repository.getLocalQuotes();
+  }
 }
