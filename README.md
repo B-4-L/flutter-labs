@@ -1,16 +1,41 @@
-# my_app
+# Трекер Привычек - Habit Tracker
 
-A new Flutter project.
+Мобильное приложение для формирования и отслеживания полезных привычек с мотивационными цитатами. Разработано в рамках дисциплины "Разработка мобильных приложений". Автор - Рожин Денис. Группа - РПС41.
 
-## Getting Started
+## О приложении
 
-This project is a starting point for a Flutter application.
+Трекер Привычек помогает пользователям формировать полезные привычки, отслеживать их выполнение и получать ежедневную мотивацию через цитаты.
 
-A few resources to get you started if this is your first Flutter project:
+### Основные функции
+- Добавление и удаление привычек
+- Система серий (streak) - подсчет последовательных дней
+- Мотивационные цитаты - онлайн и локальные
+- Визуализация прогресса
+- Локальное сохранение данных
+- Работа офлайн
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Установка и запуск
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+# Установить зависимости
+flutter pub get
+
+# Запустить приложение
+flutter run
+
+# Сборка APK
+flutter build apk --release
+
+
+Архитектура
+Приложение построено по принципам Clean Architecture:
+-Data Layer: Работа с данными (Shared Preferences, HTTP)
+-Domain Layer: Бизнес-логика (Use Cases)
+-Presentation Layer: UI (экраны, виджеты)
+
+Используемые технологии:
+-Flutter - UI фреймворк
+-Dart - язык программирования
+-Shared Preferences - локальное хранение
+-HTTP - работа с API
+-Clean Architecture - архитектурный подход
