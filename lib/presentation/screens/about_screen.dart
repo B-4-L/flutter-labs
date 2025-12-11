@@ -47,9 +47,9 @@ class AboutScreen extends StatelessWidget {
                 color: Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Column(
+              child: const Column(
                 children: [
-                  const Row(
+                  Row(
                     children: [
                       Icon(Icons.person, color: Colors.blue),
                       SizedBox(width: 10),
@@ -76,8 +76,8 @@ class AboutScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 15),
-                  const Row(
+                  SizedBox(height: 15),
+                  Row(
                     children: [
                       Icon(Icons.school, color: Colors.green),
                       SizedBox(width: 10),

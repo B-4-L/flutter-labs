@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/use_cases/quote_use_cases.dart';
 import '../../domain/models/quote.dart';
+import 'dart:math';
 
 class QuotesScreen extends StatefulWidget {
   final QuoteUseCases quoteUseCases;
@@ -14,177 +15,105 @@ class QuotesScreen extends StatefulWidget {
 class _QuotesScreenState extends State<QuotesScreen> {
   Quote? _currentQuote;
   bool _isLoading = false;
-  String _statusMessage = '';
-  String _errorMessage = '';
+  String _source = '';
+  final Random _random = Random();
 
   @override
   void initState() {
     super.initState();
-    _loadRandomQuote();
+    _loadInternetQuote();
   }
 
-  Future<void> _loadRandomQuote() async {
+  Future<void> _loadInternetQuote() async {
     setState(() {
       _isLoading = true;
-      _statusMessage = 'Загружаем из интернета...';
-      _errorMessage = '';
+      _source = '';
     });
 
     try {
       final quote = await widget.quoteUseCases.getRandomQuote();
       setState(() {
         _currentQuote = quote;
-        _statusMessage = 'Цитата загружена из интернета';
+        _source = 'Из интернета';
       });
     } catch (e) {
-      final localQuotes = widget.quoteUseCases.getLocalQuotes();
-      setState(() {
-        _currentQuote = localQuotes.isNotEmpty ? localQuotes[0] : null;
-        _statusMessage = 'Используем локальную цитату';
-        _errorMessage = 'Ошибка: ${e.toString().replaceAll('Exception: ', '')}';
-      });
+      // Если API не работает, показываем случайную локальную
+      _showRandomLocalQuote();
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
-void _showLocalQuote() {
-  final localQuotes = widget.quoteUseCases.getLocalQuotes();
-  if (localQuotes.isEmpty) return;
-  
-  int currentIndex = 0;
-  if (_currentQuote != null) {
-    final index = localQuotes.indexWhere(
-      (quote) => quote.text == _currentQuote!.text
-    );
-    if (index != -1) {
-      currentIndex = index;
+  void _loadLocalQuote() {
+    _showRandomLocalQuote();
+  }
+
+  void _showRandomLocalQuote() {
+    final localQuotes = widget.quoteUseCases.getLocalQuotes();
+    if (localQuotes.isNotEmpty) {
+      final randomIndex = _random.nextInt(localQuotes.length);
+      setState(() {
+        _currentQuote = localQuotes[randomIndex];
+        _source = 'Локальная';
+      });
     }
   }
-  
-  final nextIndex = (currentIndex + 1) % localQuotes.length;
-  
-  setState(() {
-    _currentQuote = localQuotes[nextIndex];
-    _statusMessage = 'Локальная цитата'; 
-    _errorMessage = '';
-  });
-}
 
   @override
   Widget build(BuildContext context) {
-    if (_currentQuote == null && !_isLoading) {
-      final localQuotes = widget.quoteUseCases.getLocalQuotes();
-      if (localQuotes.isNotEmpty) {
-        _currentQuote = localQuotes[0];
-        _statusMessage = 'Локальная цитата';
-      }
-    }
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Мотивационные цитаты'),
+        title: const Text('Цитаты'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.deepPurple.shade50,
-              Colors.deepPurple.shade100,
-            ],
-          ),
-        ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.lightbulb,
-              size: 80,
-              color: Colors.deepPurple.shade300,
-            ),
-            const SizedBox(height: 20),
-            
             if (_isLoading)
-              const Column(
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 20),
-                  Text('Загружаем цитату из интернета...'),
-                ],
-              )
+              const CircularProgressIndicator()
             else if (_currentQuote != null)
               Card(
-                elevation: 8,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
-                      Icon(
-                        Icons.format_quote,
-                        color: Colors.deepPurple.shade200,
-                        size: 40,
-                      ),
-                      const SizedBox(height: 10),
                       Text(
                         '«${_currentQuote!.text}»',
-                        style: TextStyle(
-                          fontSize: 18,
+                        style: const TextStyle(
+                          fontSize: 16,
                           fontStyle: FontStyle.italic,
-                          color: Colors.grey.shade700,
-                          height: 1.4,
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       Text(
                         '— ${_currentQuote!.author}',
-                        style: TextStyle(
-                          fontSize: 16,
+                        style: const TextStyle(
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Colors.deepPurple.shade600,
+                          color: Colors.grey,
                         ),
-                        textAlign: TextAlign.right,
                       ),
+                      if (_source.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            _source,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _source == 'Из интернета' 
+                                  ? Colors.blue 
+                                  : Colors.grey,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
-                ),
-              ),
-            
-              if (_statusMessage.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 15),
-                  child: Text(
-                    _statusMessage,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: _statusMessage.contains('интернета') 
-                          ? Colors.green 
-                          : Colors.orange.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-            
-            if (_errorMessage.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Text(
-                  _errorMessage,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.red,
-                  ),
-                  textAlign: TextAlign.center,
                 ),
               ),
             
@@ -194,45 +123,23 @@ void _showLocalQuote() {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _loadRandomQuote,
+                  onPressed: _isLoading ? null : _loadInternetQuote,
                   icon: const Icon(Icons.cloud_download),
-                  label: const Text('Новая из интернета'),
+                  label: const Text('Из интернета'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   ),
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _showLocalQuote,
+                  onPressed: _isLoading ? null : _loadLocalQuote,
                   icon: const Icon(Icons.phone_android),
-                  label: const Text('Следующая локальная'),
+                  label: const Text('Локальная'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple.shade300,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   ),
                 ),
               ],
-            ),
-            
-            const SizedBox(height: 20),
-            
-            Text(
-              'Всего локальных цитат: ${widget.quoteUseCases.getLocalQuotes().length}',
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
-            ),
-            
-            const SizedBox(height: 5),
-            
-            const Text(
-              'API: api.quotable.io/random',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
             ),
           ],
         ),
